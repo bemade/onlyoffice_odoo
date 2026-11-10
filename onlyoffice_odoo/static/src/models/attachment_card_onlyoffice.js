@@ -10,18 +10,26 @@ import { AttachmentList } from "@mail/core/common/attachment_list"
 import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
+import { onWillStart } from "@odoo/owl"
 
 let formats = []
-const loadFormats = async () => {
-  try {
-    const data = await fetch("/onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json")
-    formats = await data.json()
-  } catch (error) {
-    console.error("Error loading formats data:", error)
+let formatsPromise = null
+// Loaded on first use, not when the module loads: a fetch at module load
+// runs in every bundle that includes this file, including the web unit-test
+// bundle, where hoot rejects unmocked fetches and aborts the whole suite.
+const loadFormats = () => {
+  if (!formatsPromise) {
+    formatsPromise = (async () => {
+      try {
+        const data = await fetch("/onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json")
+        formats = await data.json()
+      } catch (error) {
+        console.error("Error loading formats data:", error)
+      }
+    })()
   }
+  return formatsPromise
 }
-
-loadFormats()
 
 patch(AttachmentList.prototype, {
   setup() {
@@ -29,6 +37,7 @@ patch(AttachmentList.prototype, {
     this.orm = useService("orm")
     this.notification = useService("notification")
     this.actionService = useService("action")
+    onWillStart(() => loadFormats())
   },
   // eslint-disable-next-line sort-keys
   onlyofficeCanOpen(attachment) {
