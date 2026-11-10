@@ -7,10 +7,10 @@
  */
 
 import { AttachmentList } from "@mail/core/common/attachment_list"
+import { onWillStart } from "@odoo/owl"
 import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
-import { onWillStart } from "@odoo/owl"
 
 let formats = []
 let formatsPromise = null
